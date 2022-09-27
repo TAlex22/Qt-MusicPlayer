@@ -1,0 +1,17 @@
+<RCC>
+    <qresource prefix="/images">
+        <file>icons/home.png</file>
+        <file>icons/music-album.png</file>
+        <file>icons/search-interface-symbol.png</file>
+        <file>icons/home-7-xxl.png</file>
+        <file>icons/music-library.png</file>
+        <file>icons/icons8-music-library-30.png</file>
+        <file>icons/icons8-search-30.png</file>
+        <file>icons/pause.png</file>
+        <file>icons/shuffle.png</file>
+        <file>icons/music-player.png</file>
+        <file>icons/music-player (1).png</file>
+        <file>icons/folder.png</file>
+        <file>icons/play-button.png</file>
+    </qresource>
+</RCC>
