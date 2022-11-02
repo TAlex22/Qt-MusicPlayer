@@ -22,8 +22,7 @@ public:
     int getNumberOfTracks() const;
 
 private:
-    std::vector<Track> tracks_;
+    std::vector<Track> _tracks;
 };
-
 
 #endif // PLAYLIST_H

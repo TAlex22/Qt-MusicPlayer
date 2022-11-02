@@ -25,9 +25,6 @@ set(PROJECT_SOURCES
         Playlist.cpp
         mainwindow.h
         mainwindow.ui
-        logindialog.h
-        logindialog.cpp
-        logindialog.ui
         resources.qrc
         ${TS_FILES}
 )

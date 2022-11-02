@@ -1,23 +1,23 @@
 #ifndef TRACK_H
 #define TRACK_H
 
-#include <string>
+#include <QString>
 
 class Track {
 public:
-    Track(const std::string& name, const std::string& location);
+    Track(const QString& name, const QString& location);
 
-    std::string getName() const ;
+    QString getName() const ;
 
-    std::string getLocation() const ;
+    QString getLocation() const ;
 
-    void setName(const std::string& name);
+    void setName(const QString& name);
 
-    void setLocation(const std::string& location);
+    void setLocation(const QString& location);
 
 private:
-    std::string name_;
-    std::string location_;
+    QString _name;
+    QString _location;
 };
 
 

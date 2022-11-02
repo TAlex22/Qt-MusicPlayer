@@ -4,15 +4,9 @@
 #include "Playlist.h"
 
 #include <QMainWindow>
-#include <QMediaPlayer>
-#include <QVideoWidget>
-#include <QFileDialog>
-#include <QProgressBar>
-#include <QSlider>
-#include <QTimer>
-#include <QKeyEvent>
-#include <QAudioOutput>
-#include <QFileDialog>
+
+class QMediaPlayer;
+class QAudioOutput;
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -21,7 +15,6 @@ QT_END_NAMESPACE
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
-
 public:
     MainWindow(QWidget *parent = nullptr);
 
@@ -52,18 +45,17 @@ private slots:
     void on_listWidget_doubleClicked(const QModelIndex &index);
 
 private:
-    Playlist playlist;
     Ui::MainWindow *ui;
-    QMediaPlayer* player;
-    QAudioOutput* audioOutput;
 
-    bool repeat = false;
+    Playlist playlist;
+    QMediaPlayer* _player;
+    QAudioOutput* _audioOutput;
 
-    bool shuffle =  false;
+    bool _onRepeat{false};
+    bool _onShuffle{false};
+    int _trackIndex{0};
 
-    int index = 0;
-
-    std::vector<unsigned short int> shuffledIndexes;
+    std::vector<unsigned short> _shuffledIndexes;
 
     void next();
 
@@ -75,7 +67,6 @@ private:
 
 protected:
     void keyPressEvent(QKeyEvent* parent);
-
 };
 
 #endif // MAINWINDOW_H

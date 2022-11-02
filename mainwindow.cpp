@@ -1,7 +1,11 @@
 #include "mainwindow.h"
 #include "./ui_mainwindow.h"
 
-#include <iostream>
+#include <QMediaPlayer>
+#include <QKeyEvent>
+#include <QAudioOutput>
+#include <QFileDialog>
+
 #include <algorithm>
 #include <random>
 
@@ -12,20 +16,16 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
     ui->searchWindow->setPlaceholderText("Song, artist, album");
 
+    setFixedSize(geometry().width(), geometry().height());
 
-    player = new QMediaPlayer(this);
+    _audioOutput = new QAudioOutput;
+    _audioOutput->setVolume(0.5);
 
-    connect(player, SIGNAL(positionChanged(qint64)), this, SLOT(updateSeekBar(qint64)));
-
-    this->setFixedSize(this->geometry().width(),this->geometry().height());
-
-    audioOutput = new QAudioOutput;
-
-    player->setAudioOutput(audioOutput);
+    _player = new QMediaPlayer(this);
+    _player->setAudioOutput(_audioOutput);
 
     ui->seekBar->setMaximum(1000);
     ui->volumeBar->setValue(50);
-    audioOutput->setVolume(0.5);
 
     QStringList files = QFileDialog::getOpenFileNames(this, tr("Select Music Files"));
     if (!files.empty()) {
@@ -33,45 +33,45 @@ MainWindow::MainWindow(QWidget *parent)
     }
 
     ui->listWidget->addItems(playlist.getTrackNameList());
-    ui->listWidget->setCurrentRow(index);
+    ui->listWidget->setCurrentRow(_trackIndex);
+
     loadTrack();
-    player->play();
+    _player->play();
 
+    connect(_player, SIGNAL(positionChanged(qint64)), this, SLOT(updateSeekBar(qint64)));
 }
-
 
 MainWindow::~MainWindow() {
     delete ui;
 }
 
-
 void MainWindow::next() {
-    if (repeat) {
-        player->setPosition(0);
-        player->play();
+    if (_onRepeat) {
+        _player->setPosition(0);
+        _player->play();
     }
 }
 
-
 void MainWindow::loadTrack() {
-    int idx = index;
+    int idx = _trackIndex;
 
-    if (shuffle) {
-        idx = shuffledIndexes[index];
+    if (_onShuffle) {
+        idx = _shuffledIndexes[_trackIndex];
     }
 
-    QString str = QString::fromStdString(playlist.at(idx).getLocation());
-    player->setSource(QUrl::fromLocalFile(str));
+    QString str = playlist.at(idx).getLocation();
+    _player->setSource(QUrl::fromLocalFile(str));
 }
 
 
 void MainWindow::shufflePlaylist() {
-    shuffledIndexes.resize(playlist.getNumberOfTracks());
-    std::iota(std::begin(shuffledIndexes), std::end(shuffledIndexes), 0);
+    _shuffledIndexes.resize(playlist.getNumberOfTracks());
+    std::iota(std::begin(_shuffledIndexes), std::end(_shuffledIndexes), 0);
 
     std::random_device rd;
     std::mt19937 g(rd());
-    std::shuffle(std::begin(shuffledIndexes), std::end(shuffledIndexes), g);
+
+    std::shuffle(std::begin(_shuffledIndexes), std::end(_shuffledIndexes), g);
 }
 
 
@@ -79,10 +79,10 @@ void MainWindow::keyPressEvent(QKeyEvent *event) {
     switch (event->key()) {
         case Qt::Key_Space :
         {
-            if (player->playbackState() == QMediaPlayer::PlayingState) {
-                player->pause();
+            if (_player->playbackState() == QMediaPlayer::PlayingState) {
+                _player->pause();
             } else {
-                player->play();
+                _player->play();
             }
             break;
         }
@@ -93,110 +93,94 @@ void MainWindow::keyPressEvent(QKeyEvent *event) {
     }
 }
 
-
 void MainWindow::updateSeekBar(qint64 position) {
     if(!ui->seekBar->isSliderDown()) {
-        int newVal = int((float) position / player->duration() * 1000);
+        int newVal = int((float) position / _player->duration() * 1000);
         if (newVal > 0) {
             ui->seekBar->setValue(newVal);
         }
     }
 
-    if (player->playbackState() == QMediaPlayer::StoppedState && position != 0 ) {
-        index++;
+    if (_player->playbackState() == QMediaPlayer::StoppedState && position != 0 ) {
+        _trackIndex++;
         loadTrack();
-        player->play();
+        _player->play();
     }
 }
 
-
 void MainWindow::on_play_clicked() {
-    if (player->playbackState() == QMediaPlayer::PlayingState) {
-        QIcon icon(":/images/play-button.png");
+    if (_player->playbackState() == QMediaPlayer::PlayingState) {
+        QIcon icon(":/images/icons/play-button.png");
         ui->play->setIcon(icon);
-        player->pause();
+        _player->pause();
     } else {
         QIcon icon2(":/images/icons/pause.png");
         ui->play->setIcon(icon2);
-        player->play();
+        _player->play();
    }
 }
 
-
 void MainWindow::on_volumeBar_valueChanged(int value) {
-    audioOutput->setVolume((float) value / 100);
+    _audioOutput->setVolume((float) value / 100);
 }
-
 
 void MainWindow::on_seekBar_sliderMoved(int position) {
-    player->setPosition(player->duration() / 1000 * position);
+    _player->setPosition(_player->duration() / 1000 * position);
 }
-
 
 void MainWindow::on_createPlaylist_clicked() {
     QStringList files = QFileDialog::getOpenFileNames(this, tr("Select Music Files"));
 
-        if (!files.empty()) {
-            playlist.add(files);
-            QStringList songs = playlist.getTrackNameList();
-
-            for (size_t i = 0; i < songs.size(); ++i) {
-                std::cout << songs[i].toStdString() << std::endl;
-            }
-        }
+    if (!files.empty()) {
+        playlist.add(files);
+    }
 }
-
 
 void MainWindow::on_repeatButton_stateChanged(int arg1) {
-    repeat = !repeat;
+    _onRepeat = !_onRepeat;
 }
-
 
 void MainWindow::on_nextButton_clicked() {
-    if (repeat) {
-        player->setPosition(0);
-        player->play();
+    if (_onRepeat) {
+        _player->setPosition(0);
+        _player->play();
     } else {
-        ++index;
+        ++_trackIndex;
 
-        if (index >= ui->listWidget->count()) {
-            index = 0;
+        if (_trackIndex >= ui->listWidget->count()) {
+            _trackIndex = 0;
         }
 
         loadTrack();
-        player->play();
+        _player->play();
     }
 
-    (!shuffle or repeat) ? ui->listWidget->setCurrentRow(index) : ui->listWidget->setCurrentRow(shuffledIndexes[index]);
+    (!_onShuffle or _onRepeat) ? ui->listWidget->setCurrentRow(_trackIndex) : ui->listWidget->setCurrentRow(_shuffledIndexes[_trackIndex]);
 }
-
 
 void MainWindow::on_prevButton_clicked() {
-    if (repeat) {
-        player->setPosition(0);
-        player->play();
+    if (_onRepeat) {
+        _player->setPosition(0);
+        _player->play();
     } else {
-        --index;
+        --_trackIndex;
 
-        if (index < 0) {
-            index = ui->listWidget->count() - 1;
+        if (_trackIndex < 0) {
+            _trackIndex = ui->listWidget->count() - 1;
         }
 
         loadTrack();
-        player->play();
+        _player->play();
     }
-    (!shuffle or repeat) ? ui->listWidget->setCurrentRow(index) : ui->listWidget->setCurrentRow(shuffledIndexes[index]);
+    (!_onShuffle or _onRepeat) ? ui->listWidget->setCurrentRow(_trackIndex) : ui->listWidget->setCurrentRow(_shuffledIndexes[_trackIndex]);
 }
 
-
-
 void MainWindow::on_shuffleButton_stateChanged(int arg1) {
-    shuffle = !shuffle;
-    if (shuffle) {
+    _onShuffle = !_onShuffle;
+    if (_onShuffle) {
         shufflePlaylist();
     }
 }
-
 
 void MainWindow::on_searchButton_clicked() {
     ui->searchResults->clear();
@@ -212,11 +196,10 @@ void MainWindow::on_searchButton_clicked() {
 
 }
 
-
-void MainWindow::on_listWidget_doubleClicked(const QModelIndex &index) {
-    this->index = ui->listWidget->currentRow();
-    ui->listWidget->setCurrentRow(this->index);
+void MainWindow::on_listWidget_doubleClicked(const QModelIndex& index) {
+    _trackIndex = ui->listWidget->currentRow();
+    ui->listWidget->setCurrentRow(_trackIndex);
     loadTrack();
-    player->play();
+    _player->play();
 }
 

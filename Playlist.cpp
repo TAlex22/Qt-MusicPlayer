@@ -1,10 +1,11 @@
 
 #include "Playlist.h"
+#include "Track.h"
 
 #include <fstream>
 
-std::string getNameFromLocation(const std::string& location) {
-    return location.substr(location.find_last_of("/") + 1);
+QString getNameFromLocation(const std::string& location) {
+    return QString::fromStdString(location.substr(location.find_last_of("/") + 1));
 }
 
 Playlist::Playlist() {
@@ -14,8 +15,8 @@ Playlist::Playlist() {
         std::string location;
 
         while(getline(fin, location)) {
-            std::string name =  getNameFromLocation(location);
-            tracks_.push_back(Track(name, location));
+            QString name = getNameFromLocation(location);
+            _tracks.push_back(Track(name, QString::fromStdString(location)));
         }
 
     } else {
@@ -26,22 +27,22 @@ Playlist::Playlist() {
 
 void Playlist::add(const QStringList& files) {
     for (size_t i = 0; i < files.size(); ++i) {
-        std::string location = files[i].toStdString();
-        std::string name = getNameFromLocation(location);
-        tracks_.push_back(Track(name, location));
+        QString location = files[i];
+        QString name = getNameFromLocation(location.toStdString());
+        _tracks.push_back(Track(name, location));
     }
 }
 
 void Playlist::remove(int index) {
-    tracks_.erase(tracks_.begin() + index);
+    _tracks.erase(_tracks.begin() + index);
 }
 
 void Playlist::save() {
     std::ofstream fout("playlist.txt");
 
     if (fout) {
-        for (const auto& track : tracks_) {
-            fout << track.getLocation() << std::endl;
+        for (const auto& track : _tracks) {
+            fout << track.getLocation().toStdString() << std::endl;
         }
     } else {
         throw std::invalid_argument("could not open a file");
@@ -51,8 +52,8 @@ void Playlist::save() {
 QStringList Playlist::getTrackNameList() const {
     QStringList list;
 
-    for (const auto& track : tracks_) {
-        QString name = QString::fromStdString(track.getName());
+    for (const auto& track : _tracks) {
+        QString name = track.getName();
         list.push_back(name);
     }
 
@@ -60,9 +61,9 @@ QStringList Playlist::getTrackNameList() const {
 }
 
 const Track& Playlist::at(int index) const {
-    return tracks_[index];
+    return _tracks[index];
 }
 
 int Playlist::getNumberOfTracks() const {
-    return tracks_.size();
+    return _tracks.size();
 }

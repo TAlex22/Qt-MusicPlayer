@@ -1,21 +1,21 @@
 #include "Track.h"
 
-Track::Track(const std::string& name, const std::string& location) :
-    name_(name), location_(location) {
+Track::Track(const QString& name, const QString& location) :
+    _name{name}, _location{location} {
 }
 
-std::string Track::getName() const {
-    return name_;
+QString Track::getName() const {
+    return _name;
 }
 
-std::string Track::getLocation() const {
-    return location_;
+QString Track::getLocation() const {
+    return _location;
 }
 
-void Track::setName(const std::string& name) {
-    name_ = name;
+void Track::setName(const QString& name) {
+    _name = name;
 }
 
-void Track::setLocation(const std::string& location) {
-    location_ = location;
+void Track::setLocation(const QString& location) {
+    _location = location;
 }
